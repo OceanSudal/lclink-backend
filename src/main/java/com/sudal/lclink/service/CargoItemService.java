@@ -34,7 +34,7 @@ public class CargoItemService {
                 .build();
 
         cargoItemRepository.save(cargoItem);
-        return "등록되었습니다.";
+        return "화물이 등록되었습니다.";
     }
 
 }
