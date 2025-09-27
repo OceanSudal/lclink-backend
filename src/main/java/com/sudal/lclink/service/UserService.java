@@ -6,6 +6,8 @@ import com.sudal.lclink.entity.User;
 import com.sudal.lclink.repository.CompanyRepository;
 import com.sudal.lclink.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,13 +20,14 @@ public class UserService {
     private final UserRepository userRepository;
     private final CompanyRepository companyRepository;
 
+    // CREATE
     public String register(UserDto userDto) {
-        Optional<User> findUser = userRepository.findByUserId(userDto.getUserId());
-
-        if (userDto.getUserId() != null && findUser.isPresent()){
+        if (userDto.getUserId() == null || userDto.getUserId().isBlank()){
+            throw new IllegalStateException("userId는 필수입니다.");
+        }
+        if (userRepository.findByUserId(userDto.getUserId()).isPresent()) {
             throw new IllegalStateException("이미 존재하는 ID입니다.");
         }
-
         if (userDto.getCompanyId() == null) {
             throw new IllegalArgumentException("companyId는 필수입니다.");
         }
@@ -45,74 +48,72 @@ public class UserService {
 
         User saved = userRepository.save(user);
         return saved.getUserId();
-
     }
 
+    // READ
+    @Transactional(readOnly = true)
+    public UserDto get(String userId) {
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다. userId=" + userId));
+        return toDto(user);
+    }
+
+    // READ - List
+    @Transactional(readOnly = true)
+    public Page<UserDto> list(Integer companyId, String keyword, Pageable pageable) {
+        Page<User> page;
+        if (companyId != null) {
+            page = userRepository.findByCompany_CompanyId(companyId, pageable);
+        } else if (keyword != null && !keyword.isBlank()) {
+            page = userRepository.findByNameContainingIgnoreCaseOrEmailContainingIgnoreCase(keyword, keyword, pageable);
+        } else {
+            page = userRepository.findAll(pageable);
+        }
+        return page.map(this::toDto);
+    }
+
+    // UPDATE
+    public UserDto update(String userId, UserDto dto) {
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다. userId=" + userId));
+
+        if (dto.getUserCountry() != null) user.setUserCountry(dto.getUserCountry());
+
+        if (dto.getEmail() != null) {
+            String email = dto.getEmail().trim().toLowerCase();
+            if (!email.equalsIgnoreCase(user.getEmail()) && userRepository.existsByEmail(email)) {
+                throw new IllegalStateException("이미 존재하는 이메일입니다.");
+            }
+            user.setEmail(email);
+        }
+
+        if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
+            user.setPassword(dto.getPassword());
+
+        }
+        if (dto.getName() != null) user.setName(dto.getName());
+        if (dto.getUserRole() != null) user.setUserRole(dto.getUserRole());
+
+        return toDto(user);
+    }
+
+    // DELETE
+    public void delete(String userId) {
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다. userId=" + userId));
+        userRepository.delete(user);
+    }
+
+    private UserDto toDto(User u) {
+        UserDto dto = new UserDto();
+        dto.setUserId(u.getUserId());
+        dto.setCompanyId(u.getCompany().getCompanyId());
+        dto.setUserCountry(u.getUserCountry());
+        dto.setEmail(u.getEmail());
+        dto.setPassword(null);
+        dto.setName(u.getName());
+        dto.setUserRole(u.getUserRole());
+        dto.setCreatedAt(u.getCreatedAt());
+        return dto;
+    }
 }
-
-
-
-
-//package com.sudal.lclink.service;
-//
-//import com.sudal.lclink.dto.UserDto;
-//import com.sudal.lclink.entity.Company;
-//import com.sudal.lclink.entity.User;
-//import com.sudal.lclink.exception.AlreadyExistElementException;
-//import com.sudal.lclink.repository.CompanyRepository;
-//import com.sudal.lclink.repository.UserRepository;
-//import lombok.RequiredArgsConstructor;
-//import org.springframework.security.crypto.password.PasswordEncoder;
-//import org.springframework.stereotype.Service;
-//import org.springframework.transaction.annotation.Transactional;
-//
-//@Service
-//@Transactional
-//@RequiredArgsConstructor
-//public class UserService {
-//    private final UserRepository userRepository;
-//    private final CompanyRepository companyRepository;
-//    private final PasswordEncoder passwordEncoder; // ⬅︎ Security 설정에 등록돼 있어야 함
-//
-//    public Integer register(UserDto userDto) {     // ⬅︎ 저장된 userId 반환이 자연스러움
-//        // (1) companyId 필수
-//        if (userDto.getCompanyId() == null) {
-//            throw new IllegalArgumentException("companyId는 필수입니다.");
-//        }
-//
-//        // (2) 회사 존재 확인 (즉시 검증)
-//        Company company = companyRepository.findById(userDto.getCompanyId())
-//                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 companyId입니다: " + userDto.getCompanyId()));
-//
-//        // (3) 이메일 정규화 + 중복 검사
-//        String email = userDto.getEmail() == null ? null : userDto.getEmail().trim().toLowerCase();
-//        if (email == null || email.isBlank()) {
-//            throw new IllegalArgumentException("email은 필수입니다.");
-//        }
-//        if (userRepository.existsByEmail(email)) {
-//            throw new AlreadyExistElementException("이미 등록된 이메일입니다: " + email);
-//        }
-//
-//        // (4) 수동 PK 전략을 쓰는 경우에만 활성화
-//        // if (userDto.getUserId() == null) {
-//        //     throw new IllegalArgumentException("userId는 필수입니다. (수동 PK 사용 중)");
-//        // }
-//        // if (userRepository.findByUserId(userDto.getUserId()).isPresent()) {
-//        //     throw new AlreadyExistElementException("이미 존재하는 userId입니다: " + userDto.getUserId());
-//        // }
-//
-//        // (5) User 생성 (createdAt은 @PrePersist에서 자동 세팅 권장)
-//        User user = User.builder()
-//                // .userId(userDto.getUserId())           // ⬅︎ 자동 생성이면 제거
-//                .company(company)
-//                .userCountry(userDto.getUserCountry())
-//                .email(email)
-//                .password(passwordEncoder.encode(userDto.getPassword()))
-//                .name(userDto.getName())
-//                .userRole(userDto.getUserRole())
-//                // .createdAt(userDto.getCreatedAt())     // ⬅︎ 엔티티 @PrePersist가 더 안전
-//                .build();
-//
-//        return userRepository.save(user).getUserId();
-//    }
-//}

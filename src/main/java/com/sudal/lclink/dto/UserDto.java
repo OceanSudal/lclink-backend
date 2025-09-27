@@ -1,6 +1,5 @@
 package com.sudal.lclink.dto;
 
-import com.sudal.lclink.entity.Company;
 import lombok.Getter;
 import lombok.Setter;
 
