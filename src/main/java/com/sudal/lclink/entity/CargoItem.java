@@ -1,9 +1,7 @@
 package com.sudal.lclink.entity;
 
 import jakarta.persistence.*;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.sql.Date;
 
@@ -11,11 +9,16 @@ import java.sql.Date;
 @Table(name = "cargo_items")
 @Getter
 @Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CargoItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer itemId;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @Column(nullable = false)
     private String itemName;
@@ -35,18 +38,18 @@ public class CargoItem {
     private Integer quantity;
 
     @Column(nullable = false)
-    private Integer width_cm;
+    private Integer widthCm;
 
     @Column(nullable = false)
-    private Integer length_cm;
+    private Integer lengthCm;
 
     @Column(nullable = false)
-    private Integer height_cm;
+    private Integer heightCm;
 
-    private Integer cbm;
+    private Double cbm;
 
     @Column(nullable = false)
-    private Integer weight_kg;
+    private Integer weightKg;
 
     @Column(nullable = false)
     private Date etd;
@@ -58,19 +61,64 @@ public class CargoItem {
 //    @JoinColumn(name = "request_id")
 //    private CargoRequest cargoRequest;
 
-    @Builder
-    private CargoItem(Integer itemId, String itemName, String pol, String pod, String hsCode, Integer quantity, Integer width_cm, Integer length_cm, Integer height_cm, Integer cbm, Integer weight_kg, Date etd){
-        this.itemId = itemId;
-        this.itemName = itemName;
-        this.pol = pol;
-        this.pod = pod;
-        this.hsCode = hsCode;
-        this.quantity = quantity;
-        this.width_cm = width_cm;
-        this.length_cm = length_cm;
-        this.height_cm = height_cm;
-        this.cbm = width_cm*length_cm*height_cm;
-        this.weight_kg = weight_kg;
-        this.etd = etd;
+    public static CargoItem create(
+            User user,
+            String itemName,
+            String pol,
+            String pod,
+            String hsCode,
+            Integer quantity,
+            Integer widthCm,
+            Integer lengthCm,
+            Integer heightCm,
+            Integer weightKg,
+            Date etd,
+            String packagingType,
+            String itemDescription
+    ){
+        CargoItem e = new CargoItem();
+        e.setUser(user);
+        e.setItemName(itemName);
+        e.setPol(pol);
+        e.setPod(pod);
+        e.setHsCode(hsCode);
+        e.setQuantity(quantity);
+        e.setWidthCm(widthCm);
+        e.setLengthCm(lengthCm);
+        e.setHeightCm(heightCm);
+        e.setWeightKg(weightKg);
+        e.setEtd(etd);
+        e.setPackagingType(packagingType);
+        e.setItemDescription(itemDescription);
+        return e;
     }
+
+    public void updateDetails(
+            String itemName,
+            String pol,
+            String pod,
+            String hsCode,
+            Integer quantity,
+            Integer widthCm,
+            Integer lengthCm,
+            Integer heightCm,
+            Integer weightKg,
+            Date etd,
+            String packagingType,
+            String itemDescription
+    ) {
+        setItemName(itemName);
+        setPol(pol);
+        setPod(pod);
+        setHsCode(hsCode);
+        setQuantity(quantity);
+        setWidthCm(widthCm);
+        setLengthCm(lengthCm);
+        setHeightCm(heightCm);
+        setWeightKg(weightKg);
+        setEtd(etd);
+        setPackagingType(packagingType);
+        setItemDescription(itemDescription);
+    }
+
 }

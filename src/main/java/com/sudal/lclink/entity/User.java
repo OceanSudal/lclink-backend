@@ -3,6 +3,8 @@ package com.sudal.lclink.entity;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import lombok.*;
 
@@ -39,6 +41,9 @@ public class User {
             createdAt = LocalDateTime.now();
         }
     }
+
+    @OneToMany(mappedBy = "user")
+    private List<CargoItem> cargoItems = new ArrayList<>();
 
     @Builder
     private User(String userId, Company company, String userCountry, String email, String password, String name, String userRole, LocalDateTime createdAt) {
