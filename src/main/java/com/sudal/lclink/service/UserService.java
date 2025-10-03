@@ -3,6 +3,7 @@ package com.sudal.lclink.service;
 import com.sudal.lclink.dto.UserDto;
 import com.sudal.lclink.entity.Company;
 import com.sudal.lclink.entity.User;
+import com.sudal.lclink.exception.AlreadyExistElementException;
 import com.sudal.lclink.repository.CompanyRepository;
 import com.sudal.lclink.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,13 +24,13 @@ public class UserService {
     // CREATE
     public String register(UserDto userDto) {
         if (userDto.getUserId() == null || userDto.getUserId().isBlank()){
-            throw new IllegalStateException("userId는 필수입니다.");
+            throw new IllegalArgumentException("userId는 필수입니다."); //400
         }
         if (userRepository.findByUserId(userDto.getUserId()).isPresent()) {
-            throw new IllegalStateException("이미 존재하는 ID입니다.");
+            throw new AlreadyExistElementException("이미 존재하는 ID입니다."); //409
         }
         if (userDto.getCompanyId() == null) {
-            throw new IllegalArgumentException("companyId는 필수입니다.");
+            throw new IllegalArgumentException("companyId는 필수입니다."); //400
         }
 
         Company company = companyRepository.findByCompanyId(userDto.getCompanyId())
@@ -82,7 +83,7 @@ public class UserService {
         if (dto.getEmail() != null) {
             String email = dto.getEmail().trim().toLowerCase();
             if (!email.equalsIgnoreCase(user.getEmail()) && userRepository.existsByEmail(email)) {
-                throw new IllegalStateException("이미 존재하는 이메일입니다.");
+                throw new IllegalArgumentException("이미 존재하는 이메일입니다.");
             }
             user.setEmail(email);
         }

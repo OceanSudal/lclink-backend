@@ -55,7 +55,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 && value[0].contentEquals("true");
     }
 
-    // 412 Validate Exception
+    // 422 Validate Exception
     @Override
     @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
@@ -89,5 +89,21 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         log.error("Internal error occurred", exception);
         return buildErrorResponse(exception, exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, request);
     }
+
+    // 400: 잘못된 요청(도메인 레벨 유효성 실패 등)
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<Object> handleIllegalArgument(IllegalArgumentException e, WebRequest request) {
+        return buildErrorResponse(e, e.getMessage(), HttpStatus.BAD_REQUEST, request);
+    }
+
+    // 404: 엔티티 미존재를 명확히 하고 싶으면 EntityNotFoundException 사용
+    @ExceptionHandler(jakarta.persistence.EntityNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ResponseEntity<Object> handleEntityNotFound(jakarta.persistence.EntityNotFoundException e, WebRequest request) {
+        return buildErrorResponse(e, e.getMessage(), HttpStatus.NOT_FOUND, request);
+    }
+
+
 
 }

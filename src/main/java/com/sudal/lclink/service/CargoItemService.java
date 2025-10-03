@@ -33,6 +33,7 @@ public class CargoItemService {
                 dto.getItemName(),
                 dto.getPol(),
                 dto.getPod(),
+                dto.getIncoterms(),
                 dto.getHsCode(),
                 dto.getQuantity(),
                 dto.getWidthCm(),
@@ -56,14 +57,27 @@ public class CargoItemService {
         return CargoItemDto.from(found);
     }
 
-    // LIST (userId)
+    // LIST (전체)
     @Transactional(readOnly = true)
     public Page<CargoItemDto> list(String userId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "itemId"));
         Page<CargoItem> pageData = (userId == null || userId.isBlank())
                 ? cargoItemRepository.findAll(pageable)
                 : cargoItemRepository.findByUserId(userId, pageable);
+
         return pageData.map(CargoItemDto::from);
+    }
+
+    // LIST (userId)
+    @Transactional(readOnly = true)
+    public Page<CargoItemDto> listByUserId(String userId, int page, int size) {
+        if (userId == null || userId.isBlank()) {
+            return Page.empty(PageRequest.of(page, size));
+        }
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "itemId"));
+        return cargoItemRepository.findByUser_UserId(userId, pageable)
+                .map(CargoItemDto::from);
     }
 
     // UPDATE
@@ -75,6 +89,7 @@ public class CargoItemService {
                 dto.getItemName(),
                 dto.getPol(),
                 dto.getPod(),
+                dto.getIncoterms(),
                 dto.getHsCode(),
                 dto.getQuantity(),
                 dto.getWidthCm(),
@@ -91,7 +106,8 @@ public class CargoItemService {
 
     // DELETE
     public void delete(Integer itemId) {
-        if (!cargoItemRepository.existsById(itemId)) return;
+        CargoItem target = cargoItemRepository.findByItemId(itemId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 화물입니다. itemId=" + itemId));
         cargoItemRepository.deleteById(itemId);
     }
 }

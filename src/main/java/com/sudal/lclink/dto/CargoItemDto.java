@@ -20,7 +20,7 @@ public class CargoItemDto {
     private String pol;
     private String pod;
 
-    //Incoterms
+    private String incoterms;
 
     private String hsCode;
     private Integer quantity;
@@ -51,6 +51,7 @@ public class CargoItemDto {
                 .itemName(e.getItemName())
                 .pol(e.getPol())
                 .pod(e.getPod())
+                .incoterms(e.getIncoterms())
                 .hsCode(e.getHsCode())
                 .quantity((int) q)
                 .widthCm((int) w)
