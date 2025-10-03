@@ -29,7 +29,8 @@ public class CargoItem {
     @Column(nullable = false)
     private String pod;
 
-    //Incoterms
+    @Column(nullable = false)
+    private String incoterms;
 
     @Column(nullable = false)
     private String hsCode;
@@ -57,15 +58,13 @@ public class CargoItem {
     private String packagingType;
     private String itemDescription;
 
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "request_id")
-//    private CargoRequest cargoRequest;
 
     public static CargoItem create(
             User user,
             String itemName,
             String pol,
             String pod,
+            String incoterms,
             String hsCode,
             Integer quantity,
             Integer widthCm,
@@ -81,6 +80,7 @@ public class CargoItem {
         e.setItemName(itemName);
         e.setPol(pol);
         e.setPod(pod);
+        e.setIncoterms(incoterms);
         e.setHsCode(hsCode);
         e.setQuantity(quantity);
         e.setWidthCm(widthCm);
@@ -97,6 +97,7 @@ public class CargoItem {
             String itemName,
             String pol,
             String pod,
+            String incoterms,
             String hsCode,
             Integer quantity,
             Integer widthCm,
@@ -110,6 +111,7 @@ public class CargoItem {
         setItemName(itemName);
         setPol(pol);
         setPod(pod);
+        setIncoterms(incoterms);
         setHsCode(hsCode);
         setQuantity(quantity);
         setWidthCm(widthCm);

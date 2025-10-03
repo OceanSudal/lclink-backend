@@ -71,8 +71,16 @@ public class CompanyService {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 companyId입니다: " + companyId));
 
         if (dto.getCompanyName() != null) c.setCompanyName(dto.getCompanyName());
+
         if (dto.getAddress() != null) c.setAddress(dto.getAddress());
+
         if (dto.getCompanyType() != null) c.setCompanyType(dto.getCompanyType());
+
+        final String bn = normalizeBusinessNum(dto.getBusinessNum());
+        if (dto.getBusinessNum() != null && companyRepository.existsByBusinessNum(bn)) {
+            throw new AlreadyExistElementException("이미 등록된 사업자번호입니다: " + bn);
+        }
+        if (dto.getBusinessNum() != null) c.setBusinessNum(dto.getBusinessNum());
 
         return toDto(c);
     }

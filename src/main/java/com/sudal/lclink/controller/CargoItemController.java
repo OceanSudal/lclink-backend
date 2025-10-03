@@ -26,7 +26,7 @@ public class CargoItemController {
         return cargoItemService.getCargoItem(itemId);
     }
 
-    // LIST (userId, page, size)
+    // LIST
     @GetMapping
     public Page<CargoItemDto> list(
             @RequestParam(required = false) String userId,
