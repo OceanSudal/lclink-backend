@@ -26,15 +26,18 @@ public class Company {
 
     private String companyType;
 
+    private String companyCountry;
+
     @OneToMany(mappedBy = "company")
     private List<User> users = new ArrayList<>();
 
     @Builder
-    private Company(String companyName, String businessNum, String address, String companyType) {
+    private Company(String companyName, String businessNum, String address, String companyType, String companyCountry) {
         this.companyName = companyName;
         this.businessNum = businessNum;
         this.address = address;
         this.companyType = companyType;
+        this.companyCountry = companyCountry;
     }
 
 }

@@ -12,5 +12,6 @@ public class CompanyDto {
     private String businessNum;
     private String address;
     private String companyType;
+    private String companyCountry;
 
 }

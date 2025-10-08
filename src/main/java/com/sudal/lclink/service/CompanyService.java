@@ -36,6 +36,7 @@ public class CompanyService {
                 .businessNum(bn)
                 .address(companyDto.getAddress())
                 .companyType(companyDto.getCompanyType())
+                .companyCountry(companyDto.getCompanyCountry())
                 .build();
 
         try {
@@ -82,6 +83,8 @@ public class CompanyService {
         }
         if (dto.getBusinessNum() != null) c.setBusinessNum(dto.getBusinessNum());
 
+        if(dto.getCompanyCountry() != null) c.setCompanyCountry(dto.getCompanyCountry());
+
         return toDto(c);
     }
 
@@ -107,6 +110,7 @@ public class CompanyService {
         dto.setBusinessNum(c.getBusinessNum());
         dto.setAddress(c.getAddress());
         dto.setCompanyType(c.getCompanyType());
+        dto.setCompanyCountry(c.getCompanyCountry());
         return dto;
     }
 }
