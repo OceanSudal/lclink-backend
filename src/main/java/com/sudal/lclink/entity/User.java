@@ -24,18 +24,25 @@ public class User {
     @JoinColumn(name = "company_id", nullable = false)
     private Company company;
 
-    private String userCountry;
-
     private String email;
 
     private String password;
 
     private String name;
 
-    private String userRole;
-
     private LocalDateTime createdAt;
 
+    @Lob
+    @Column(name = "certificate", columnDefinition = "LONGBLOB")
+    private byte[] certificate;
+
+    @Column(name = "certificate_filename")
+    private String certificateFilename;
+
+    @Column(name = "certificate_content_type")
+    private String certificateContentType;
+
+    @PrePersist
     public void onCreate() {
         if (createdAt == null) {
             createdAt = LocalDateTime.now();
@@ -46,15 +53,15 @@ public class User {
     private List<CargoItem> cargoItems = new ArrayList<>();
 
     @Builder
-    private User(String userId, Company company, String userCountry, String email, String password, String name, String userRole, LocalDateTime createdAt) {
+    private User(String userId, Company company, String email, String password, String name, LocalDateTime createdAt, byte[] certificate, String certificateFilename, String certificateContentType) {
         this.userId = userId;
         this.company = company;
-        this.userCountry = userCountry;
         this.email = email;
         this.password = password;
         this.name = name;
-        this.userRole = userRole;
         this.createdAt = createdAt;
-
+        this.certificate = certificate;
+        this.certificateFilename = certificateFilename;
+        this.certificateContentType = certificateContentType;
     }
 }

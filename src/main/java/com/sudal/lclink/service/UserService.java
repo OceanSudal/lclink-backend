@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.util.Optional;
 
 @Service
@@ -36,15 +37,35 @@ public class UserService {
         Company company = companyRepository.findByCompanyId(userDto.getCompanyId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 company입니다."));
 
+        byte[] certificateData = null;
+        String filename = null;
+        String contentType = null;
+
+        if (userDto.getCertificateFile() != null && !userDto.getCertificateFile().isEmpty()) {
+            try {
+                certificateData = userDto.getCertificateFile().getBytes();
+                filename = userDto.getCertificateFile().getOriginalFilename();
+                contentType = userDto.getCertificateFile().getContentType();
+
+                // PDF 파일 검증
+                if (!contentType.equals("application/pdf")) {
+                    throw new IllegalArgumentException("PDF 파일만 업로드 가능합니다.");
+                }
+            } catch (IOException e) {
+                throw new RuntimeException("파일 업로드 중 오류가 발생했습니다.", e);
+            }
+        }
+
         User user = User.builder()
                 .userId(userDto.getUserId())
                 .company(company)
-                .userCountry(userDto.getUserCountry())
                 .email(userDto.getEmail())
                 .password(userDto.getPassword())
                 .name(userDto.getName())
-                .userRole(userDto.getUserRole())
                 .createdAt(userDto.getCreatedAt())
+                .certificate(certificateData)
+                .certificateFilename(filename)
+                .certificateContentType(contentType)
                 .build();
 
         User saved = userRepository.save(user);
@@ -57,6 +78,19 @@ public class UserService {
         User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다. userId=" + userId));
         return toDto(user);
+    }
+
+    // PDF 다운로드
+    @Transactional(readOnly = true)
+    public byte[] getCertificate(String userId) {
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다. userId=" + userId));
+
+        if (user.getCertificate() == null) {
+            throw new IllegalArgumentException("인증서가 존재하지 않습니다.");
+        }
+
+        return user.getCertificate();
     }
 
     // READ - List
@@ -78,8 +112,6 @@ public class UserService {
         User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다. userId=" + userId));
 
-        if (dto.getUserCountry() != null) user.setUserCountry(dto.getUserCountry());
-
         if (dto.getEmail() != null) {
             String email = dto.getEmail().trim().toLowerCase();
             if (!email.equalsIgnoreCase(user.getEmail()) && userRepository.existsByEmail(email)) {
@@ -93,7 +125,21 @@ public class UserService {
 
         }
         if (dto.getName() != null) user.setName(dto.getName());
-        if (dto.getUserRole() != null) user.setUserRole(dto.getUserRole());
+
+        if (dto.getCertificateFile() != null && !dto.getCertificateFile().isEmpty()) {
+            try {
+                String contentType = dto.getCertificateFile().getContentType();
+                if (!contentType.equals("application/pdf")) {
+                    throw new IllegalArgumentException("PDF 파일만 업로드 가능합니다.");
+                }
+
+                user.setCertificate(dto.getCertificateFile().getBytes());
+                user.setCertificateFilename(dto.getCertificateFile().getOriginalFilename());
+                user.setCertificateContentType(contentType);
+            } catch (IOException e) {
+                throw new RuntimeException("파일 업로드 중 오류가 발생했습니다.", e);
+            }
+        }
 
         return toDto(user);
     }
@@ -109,12 +155,12 @@ public class UserService {
         UserDto dto = new UserDto();
         dto.setUserId(u.getUserId());
         dto.setCompanyId(u.getCompany().getCompanyId());
-        dto.setUserCountry(u.getUserCountry());
         dto.setEmail(u.getEmail());
         dto.setPassword(null);
         dto.setName(u.getName());
-        dto.setUserRole(u.getUserRole());
         dto.setCreatedAt(u.getCreatedAt());
+        dto.setCertificateFilename(u.getCertificateFilename());
+        dto.setHasCertificate(u.getCertificate() != null);
         return dto;
     }
 }
