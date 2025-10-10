@@ -2,8 +2,10 @@ package com.sudal.lclink.service;
 
 import com.sudal.lclink.dto.CargoItemDto;
 import com.sudal.lclink.entity.CargoItem;
+import com.sudal.lclink.entity.Company;
 import com.sudal.lclink.entity.User;
 import com.sudal.lclink.repository.CargoItemRepository;
+import com.sudal.lclink.repository.CompanyRepository;
 import com.sudal.lclink.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -22,11 +24,13 @@ import java.util.Optional;
 public class CargoItemService {
     private final CargoItemRepository cargoItemRepository;
     private final UserRepository userRepository;
+    private final CompanyRepository companyRepository;
 
     // CREATE
     public CargoItemDto register(CargoItemDto dto) {
         User owner = userRepository.findByUserId(dto.getUserId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다. userId=" + dto.getUserId()));
+
 
         CargoItem entity = CargoItem.create(
                 owner,

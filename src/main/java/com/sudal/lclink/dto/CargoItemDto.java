@@ -28,12 +28,14 @@ public class CargoItemDto {
     private Integer widthCm;
     private Integer lengthCm;
     private Integer heightCm;
-    private Integer cbm;
+    private Double cbm;
     private Integer weightKg;
     private Date etd;
 
     private String packagingType;
     private String itemDescription;
+
+    private String companyType;
 
 
     public static CargoItemDto from(CargoItem e) {
@@ -43,7 +45,7 @@ public class CargoItemDto {
         long q = e.getQuantity();
 
         double m3 = (w*1.0) * l * h * q / 1000000.0;
-        int cbmVal = (int) Math.round(m3);
+        double cbmVal = Math.round(m3);
 
         return CargoItemDto.builder()
                 .itemId(e.getItemId())
@@ -62,6 +64,9 @@ public class CargoItemDto {
                 .etd(e.getEtd())
                 .packagingType(e.getPackagingType())
                 .itemDescription(e.getItemDescription())
+                .companyType(e.getUser()
+                        .getCompany()
+                        .getCompanyType())
                 .build();
     }
 }
