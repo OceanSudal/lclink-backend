@@ -28,7 +28,7 @@ public class CargoItemDto {
     private Integer widthCm;
     private Integer lengthCm;
     private Integer heightCm;
-    private Integer cbm;
+    private Double cbm;
     private Integer weightKg;
     private Date etd;
 
@@ -43,7 +43,7 @@ public class CargoItemDto {
         long q = e.getQuantity();
 
         double m3 = (w*1.0) * l * h * q / 1000000.0;
-        int cbmVal = (int) Math.round(m3);
+        double cbmVal = Math.round(m3);
 
         return CargoItemDto.builder()
                 .itemId(e.getItemId())
