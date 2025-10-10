@@ -35,6 +35,8 @@ public class CargoItemDto {
     private String packagingType;
     private String itemDescription;
 
+    private String companyType;
+
 
     public static CargoItemDto from(CargoItem e) {
         long w = e.getWidthCm();
@@ -62,6 +64,9 @@ public class CargoItemDto {
                 .etd(e.getEtd())
                 .packagingType(e.getPackagingType())
                 .itemDescription(e.getItemDescription())
+                .companyType(e.getUser()
+                        .getCompany()
+                        .getCompanyType())
                 .build();
     }
 }
