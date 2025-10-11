@@ -2,9 +2,11 @@ package com.sudal.lclink.service;
 
 import com.sudal.lclink.dto.CargoItemDto;
 import com.sudal.lclink.dto.CargoRequestDto;
+import com.sudal.lclink.dto.CompanyDto;
 import com.sudal.lclink.entity.CargoItem;
 import com.sudal.lclink.entity.CargoRequest;
 import com.sudal.lclink.entity.Company;
+import com.sudal.lclink.exception.AlreadyExistElementException;
 import com.sudal.lclink.repository.CargoItemRepository;
 import com.sudal.lclink.repository.CargoRequestRepository;
 import com.sudal.lclink.repository.CompanyRepository;
@@ -65,11 +67,38 @@ public class CargoRequestService {
                 .toList();
     }
 
+    // UPDATE
+    public CargoRequestDto update(Integer requestId, CargoRequestDto dto) {
+        CargoRequest c = cargoRequestRepository.findByRequestId(requestId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 requestId입니다: " + requestId));
+
+
+        if (dto.getOriginPortCode() != null) c.setOriginPortCode(dto.getOriginPortCode());
+        if (dto.getDestinationPortCode() != null) c.setDestinationPortCode(dto.getDestinationPortCode());
+        if (dto.getReadyToLoadDate() != null) c.setReadyToLoadDate(dto.getReadyToLoadDate());
+        if (dto.getIncotermsCode() != null) c.setIncotermsCode(dto.getIncotermsCode());
+        if (dto.getRequestStatus() != null) c.setRequestStatus(dto.getRequestStatus());
+
+        CargoRequest updated = cargoRequestRepository.save(c);
+        return CargoRequestDto.from(updated);
+    }
+
+
     // DELETE
     public void delete(Integer id) {
         if (!cargoRequestRepository.existsById(id)) {
             throw new IllegalArgumentException("존재하지 않는 요청입니다. id=" + id);
         }
         cargoRequestRepository.deleteById(id);
+    }
+
+    private CargoRequestDto toDto(CargoRequest c) {
+        CargoRequestDto dto = new CargoRequestDto();
+        dto.setOriginPortCode(c.getOriginPortCode());
+        dto.setDestinationPortCode(c.getDestinationPortCode());
+        dto.setReadyToLoadDate(c.getReadyToLoadDate());
+        dto.setIncotermsCode(c.getIncotermsCode());
+        dto.setRequestStatus(c.getRequestStatus());
+        return dto;
     }
 }

@@ -12,9 +12,6 @@ import java.util.Optional;
 @Repository
 public interface CargoRequestRepository extends JpaRepository<CargoRequest, Integer> {
     Optional<CargoRequest> findByRequestId(Integer requestId);
-    Page<CargoRequest> findByUser_UserId(String userId, Pageable pageable);
 
-    default Page<CargoRequest> findByUserId(String userId, Pageable pageable) {
-        return findByUser_UserId(userId, pageable);
-    }
+
 }
