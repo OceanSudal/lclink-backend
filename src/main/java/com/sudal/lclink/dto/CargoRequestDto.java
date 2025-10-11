@@ -36,4 +36,6 @@ public class CargoRequestDto {
                 .createdAt(entity.getCreatedAt())
                 .build();
     }
+
+
 }

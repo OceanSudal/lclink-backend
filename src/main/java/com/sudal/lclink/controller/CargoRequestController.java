@@ -1,6 +1,8 @@
 package com.sudal.lclink.controller;
 
+import com.sudal.lclink.dto.CargoItemDto;
 import com.sudal.lclink.dto.CargoRequestDto;
+import com.sudal.lclink.entity.CargoRequest;
 import com.sudal.lclink.service.CargoRequestService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,9 +22,9 @@ public class CargoRequestController {
         return ResponseEntity.ok(cargoRequestService.register(dto));
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<CargoRequestDto> get(@PathVariable Integer id) {
-        return ResponseEntity.ok(cargoRequestService.get(id));
+    @GetMapping("/{requestId}")
+    public ResponseEntity<CargoRequestDto> get(@PathVariable Integer requestId) {
+        return ResponseEntity.ok(cargoRequestService.get(requestId));
     }
 
     @GetMapping
@@ -30,9 +32,18 @@ public class CargoRequestController {
         return ResponseEntity.ok(cargoRequestService.list());
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Integer id) {
-        cargoRequestService.delete(id);
+    // UPDATE
+    @PutMapping("/{requestId}")
+    public CargoRequestDto update(
+            @PathVariable Integer requestId,
+            @RequestBody CargoRequestDto req
+    ) {
+        return cargoRequestService.update(requestId, req);
+    }
+
+    @DeleteMapping("/{requestId}")
+    public ResponseEntity<Void> delete(@PathVariable Integer requestId) {
+        cargoRequestService.delete(requestId);
         return ResponseEntity.noContent().build();
     }
 }
