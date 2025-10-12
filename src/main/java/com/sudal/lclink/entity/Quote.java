@@ -24,8 +24,8 @@ public class Quote {
     private CargoRequest cargoRequest;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "forwarder_company_id", nullable = false)
-    private Company forwarderCompany;
+    @JoinColumn(name = "forwarder_user_id", nullable = false)
+    private User forwarderUser;
 
     @Column(name = "total_price")
     private BigDecimal totalPrice;
