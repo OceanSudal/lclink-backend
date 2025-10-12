@@ -4,8 +4,11 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sudal.lclink.client.GeminiClient;
 import com.sudal.lclink.dto.CargoItemDto;
+import com.sudal.lclink.dto.CargoRequestDto;
 import com.sudal.lclink.entity.CargoItem;
+import com.sudal.lclink.entity.CargoRequest;
 import com.sudal.lclink.repository.CargoItemRepository;
+import com.sudal.lclink.repository.CargoRequestRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -17,90 +20,71 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class RecommendationService {
 
-    private final CargoItemRepository cargoItemRepository;
+    private final CargoRequestRepository cargoRequestRepository; // 👈 변경
     private final GeminiClient geminiClient;
     private final ObjectMapper objectMapper;
 
-    public List<CargoItemDto> getAiRecommendations(String forwarderUserId) {
+    public List<CargoRequestDto> getAiRecommendations(String forwarderUserId) {
+        // 1. OPEN 상태의 cargo-request만 가져오기 (아직 견적을 받지 않은 요청)
+        List<CargoRequest> openRequests = cargoRequestRepository
+                .findAllByRequestStatus("OPEN"); // 👈 변경
 
-        // 1. 비교 대상 데이터 준비
-        List<CargoItem> shipperCargos = cargoItemRepository.findAllByUser_Company_CompanyType("SHIPPER");
+        System.out.println("OPEN status cargo-request size: " + openRequests.size());
 
-        List<CargoItemDto> shipperCargosDto = shipperCargos.stream()
-                .map(CargoItemDto::from)
-                .collect(Collectors.toList());
-
-        if (shipperCargosDto.isEmpty()) {
+        if (openRequests.isEmpty()) {
             return List.of();
         }
 
-        // 데이터가 너무 많으면 제한 (토큰 제한 방지)
-        int maxItems = 20;
-        if (shipperCargosDto.size() > maxItems) {
-            shipperCargosDto = shipperCargosDto.stream()
-                    .limit(maxItems)
-                    .collect(Collectors.toList());
-        }
-
-        // 2. 프롬프트 생성
-        String prompt = createRecommendationPrompt(shipperCargosDto);
+        // 2. DTO 변환
+        List<CargoRequestDto> requestsDto = openRequests.stream()
+                .map(CargoRequestDto::from)
+                .collect(Collectors.toList());
 
         // 3. Gemini API 호출
+        String prompt = createRecommendationPrompt(requestsDto);
         String llmResponseJson = geminiClient.getRecommendation(prompt);
+
+        System.out.println("DEBUG: LLM response origin: " + llmResponseJson); // 👈 디버깅 로그 추가!
 
         if (llmResponseJson == null) {
             return List.of();
         }
 
         try {
-            // 4. Gemini의 JSON 응답 파싱
             llmResponseJson = llmResponseJson.replace("```json", "").replace("```", "").trim();
-
             Map<String, List<Map<String, Object>>> responseMap = objectMapper.readValue(llmResponseJson, new TypeReference<>() {});
             List<Map<String, Object>> recommendations = responseMap.get("recommendations");
 
-            if (recommendations == null || recommendations.isEmpty()) {
-                return List.of();
-            }
-
             List<Integer> recommendedIds = recommendations.stream()
-                    .map(rec -> (Integer) rec.get("itemId"))
+                    .map(rec -> (Integer) rec.get("requestId")) // 👈 itemId → requestId
                     .collect(Collectors.toList());
 
-            // 5. 추천된 ID로 실제 화물 정보를 DB에서 조회하여 반환
-            List<CargoItemDto> result = cargoItemRepository.findAllByItemIdIn(recommendedIds).stream()
-                    .map(CargoItemDto::from)
+            // 4. 추천된 cargo-request 반환
+            return cargoRequestRepository.findAllByRequestIdIn(recommendedIds).stream()
+                    .map(CargoRequestDto::from)
                     .collect(Collectors.toList());
-
-            return result;
 
         } catch (Exception e) {
-            // 로깅 구문 삭제
+            System.err.println("Gemini response parsing error: " + e.getMessage());
             return List.of();
         }
     }
 
-    private String createRecommendationPrompt(List<CargoItemDto> shipperCargos) {
-        String shipperCargosJson;
+    private String createRecommendationPrompt(List<CargoRequestDto> requests) {
+        String requestsJson;
         try {
-            shipperCargosJson = objectMapper.writeValueAsString(shipperCargos);
+            requestsJson = objectMapper.writeValueAsString(requests);
         } catch (Exception e) {
-            // 로깅 구문 삭제
-            shipperCargosJson = "[]";
+            requestsJson = "[]";
         }
 
         return String.format(
-                "You are an expert LCL freight contract matching specialist for a forwarder. " +
-                        "From the 'List of Shipper Contracts' below, select the 3 most attractive contracts. " +
-                        "The criteria for attractiveness are: 1) CBM and weight are not too small, 2) origin and destination are clear, and 3) the departure date (etd) is not too far in the future. " +
-                        "For each recommendation, summarize the reason in one sentence. " +
-                        "You MUST respond ONLY in the following JSON format. Do not add any other explanations.\n\n" +
-                        "### List of Shipper Contracts:\n%s\n\n" +
-                        "### Output Format:\n" +
-                        "```json\n" +
-                        "{\"recommendations\": [{\"itemId\": 1, \"reason\": \"example reason\"}]}\n" +
-                        "```",
-                shipperCargosJson
+                "You are an expert LCL freight matching specialist for a forwarder." +
+                        "From the 'List of Cargo Requests' below, select the 3 most attractive requests to bid on." +
+                        "Criteria: 1) Clear origin/destination, 2) Reasonable departure date, 3) Suitable cargo volume." +
+                        "Respond ONLY in JSON format: {\"recommendations\": [{\"requestId\": <id>, \"reason\": \"<reason>\"}]}\n\n" +
+                        "### Cargo Requests:\n%s",
+                requestsJson
         );
     }
 }

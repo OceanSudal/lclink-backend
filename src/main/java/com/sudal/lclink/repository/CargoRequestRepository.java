@@ -14,6 +14,8 @@ import java.util.Optional;
 public interface CargoRequestRepository extends JpaRepository<CargoRequest, Integer> {
     Optional<CargoRequest> findByRequestId(Integer requestId);
     List<CargoRequest> findByShipperUser_UserId(String userId);
+    List<CargoRequest> findAllByRequestStatus(String status);
+    List<CargoRequest> findAllByRequestIdIn(List<Integer> requestIds);
 
 
 }
