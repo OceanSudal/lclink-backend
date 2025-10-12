@@ -27,6 +27,11 @@ public class CargoRequestController {
         return ResponseEntity.ok(cargoRequestService.get(requestId));
     }
 
+    @GetMapping("/userId/{userId}")
+    public ResponseEntity<List<CargoRequestDto>> getUserRequest(@PathVariable String userId) {
+        return ResponseEntity.ok(cargoRequestService.getUserRequest(userId));
+    }
+
     @GetMapping
     public ResponseEntity<List<CargoRequestDto>> list() {
         return ResponseEntity.ok(cargoRequestService.list());
