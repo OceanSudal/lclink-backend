@@ -61,6 +61,20 @@ public class CargoRequestService {
         return CargoRequestDto.from(found);
     }
 
+    // READ (userId)
+    @Transactional(readOnly = true)
+    public List<CargoRequestDto> getUserRequest(String userId) {
+        List<CargoRequest> requests = cargoRequestRepository.findByShipperUser_UserId(userId);
+
+        if (requests.isEmpty()){
+                throw new IllegalArgumentException("사용자을 찾을 수 없습니다. userId=" + userId);
+        }
+
+        return requests.stream()
+                .map(CargoRequestDto::from)
+                .toList();
+    }
+
     // READ (전체)
     @Transactional(readOnly = true)
     public List<CargoRequestDto> list() {
