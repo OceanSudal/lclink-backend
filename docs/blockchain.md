@@ -7,18 +7,23 @@ scp -i ~/sudal-dev-key.pem -r \
     ~/lclink-crypto/
 ```
 
-### 2. src/main/resources/application.properties 설정
-```properties
-fabric.network.name=lclink-network
-fabric.channel.name=lcchannel
-fabric.chaincode.name=lclink_chaincode
-fabric.connection.profile=classpath:connection-profile.json
-
-# 경로 수정
-fabric.crypto.path=/Users/username/lclink-crypto/User1@shipper.lclink.com/msp
-
-fabric.identity.label=appUser
-fabric.msp.id=ShipperMSP
+### 2. src/main/resources/application.yml 설정
+```yml
+fabric:
+    network:
+        name: lclink-network
+    channel:
+        name: lcchannel
+    chaincode:
+        name: lclink_chaincode
+    connection:
+        profile: classpath:connection-profile.json
+    crypto:
+        path: /home/ubuntu/lclink-crypto/User1@shipper.lclink.com/msp
+    identity:
+        label: appUser
+    msp:
+        id: ShipperMSP
 ```
 
 ### 3. src/main/resources/connection-profile.json 설정
