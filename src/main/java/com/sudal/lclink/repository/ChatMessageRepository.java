@@ -1,0 +1,17 @@
+package com.sudal.lclink.repository;
+
+import com.sudal.lclink.entity.ChatMessage;
+import com.sudal.lclink.entity.ChatRoom;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> {
+
+    /**
+     * 특정 채팅방의 모든 메시지를 시간순으로 조회
+     */
+    List<ChatMessage> findAllByChatRoomOrderByTimestampAsc(ChatRoom chatRoom);
+}
