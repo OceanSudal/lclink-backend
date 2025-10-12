@@ -30,23 +30,22 @@ public class GeminiClient implements InitializingBean {
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        // 모든 로깅 구문 삭제됨
+        // No operations
     }
 
-    // API 키 확인 (추가)
     @PostConstruct
     public void init() {
-        if (apiKey == null || apiKey.isEmpty() || apiKey.equals("${GEMINI_API_KEY:}")) {
-            // 모든 로깅 구문 삭제됨
+        if (apiKey == null || apiKey.isEmpty() || apiKey.equals("${gemini.api.key}")) {
+            System.err.println("❌ ERROR: Gemini API Key is not configured or is incorrect. (Current Value: " + apiKey + ")");
         } else {
-            // 모든 로깅 구문 삭제됨
+            System.out.println("✅ INFO: Gemini API Key loaded successfully.");
         }
     }
 
     @SuppressWarnings("unchecked")
     public String getRecommendation(String prompt) {
-        // API 키 재확인 (추가)
-        if (apiKey == null || apiKey.isEmpty()) {
+        if (apiKey == null || apiKey.isEmpty() || apiKey.equals("${gemini.api.key}")) {
+            System.err.println("❌ ERROR: Skipping Gemini API call because the API Key is invalid.");
             return null;
         }
 
@@ -54,9 +53,8 @@ public class GeminiClient implements InitializingBean {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        //headers.set("x-goog-api-key", apiKey);
 
-        // Gemini API가 요구하는 요청 본문 형식
+        // Gemini API Request Body construction
         Map<String, Object> textPart = new HashMap<>();
         textPart.put("text", prompt);
 
@@ -69,9 +67,14 @@ public class GeminiClient implements InitializingBean {
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
         try {
+            System.out.println("DEBUG: Sending request to Gemini API...");
+
+            // This is the point where the actual network call is made
             Map<String, Object> response = restTemplate.postForObject(fullUrl, entity, Map.class);
 
-            // Gemini 응답에서 실제 텍스트 부분 추출
+            System.out.println("DEBUG: Received response from Gemini API.");
+
+            // Extract the text part from the Gemini response structure
             if (response != null && response.containsKey("candidates")) {
                 List<Map<String, Object>> candidates = (List<Map<String, Object>>) response.get("candidates");
                 if (!candidates.isEmpty()) {
@@ -83,10 +86,15 @@ public class GeminiClient implements InitializingBean {
                 }
             }
         } catch (Exception e) {
-            // 모든 로깅 구문 삭제됨
+            // 👈 The critical addition: logging the full exception stack trace
+            System.err.println("❌ FATAL ERROR: Exception occurred during Gemini API call.");
+            System.err.println("   Cause: " + e.getMessage());
+            e.printStackTrace();
             return null;
         }
+
+        // Handling cases where response is received but structure is unexpected (e.g., block reason)
+        System.err.println("❌ ERROR: Gemini API response was received but did not contain candidates (e.g., safety block or empty response).");
         return null;
     }
-
 }
