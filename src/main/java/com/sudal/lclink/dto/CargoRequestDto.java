@@ -15,7 +15,7 @@ public class CargoRequestDto {
 
     private Integer requestId;
     private Integer itemId;
-    private Integer shipperCompanyId;
+    private String shipperUserId;
     private String originPortCode;
     private String destinationPortCode;
     private LocalDate readyToLoadDate;
@@ -27,7 +27,7 @@ public class CargoRequestDto {
         return CargoRequestDto.builder()
                 .requestId(entity.getRequestId())
                 .itemId(entity.getCargoItem().getItemId())
-                .shipperCompanyId(entity.getShipperCompany().getCompanyId())
+                .shipperUserId(entity.getShipperUser().getUserId())
                 .originPortCode(entity.getOriginPortCode())
                 .destinationPortCode(entity.getDestinationPortCode())
                 .readyToLoadDate(entity.getReadyToLoadDate())

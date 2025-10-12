@@ -27,8 +27,8 @@ public class CargoRequest {
 
     // shipper_company_id 참조
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "shipper_company_id", nullable = false)
-    private Company shipperCompany;
+    @JoinColumn(name = "shipper_user_id", nullable = false)
+    private User shipperUser;
 
     @Column(name = "origin_port_code", nullable = false)
     private String originPortCode;
