@@ -23,8 +23,6 @@ public class JwtTokenProvider {
         Date now = new Date();
         Date validity = new Date(now.getTime() + validityInMilliseconds);
 
-        log.info("토큰 생성 - userId: {}, 만료시간: {}", userId, validity);
-
         return Jwts.builder()
                 .setSubject(userId)
                 .setIssuedAt(now)
@@ -41,7 +39,6 @@ public class JwtTokenProvider {
                     .parseClaimsJws(token)
                     .getBody()
                     .getSubject();
-            log.info("토큰에서 userId 추출: {}", userId);
             return userId;
         } catch (Exception e) {
             log.error("토큰에서 userId 추출 실패", e);
@@ -55,7 +52,6 @@ public class JwtTokenProvider {
                     .setSigningKey(Keys.hmacShaKeyFor(secretKey.getBytes()))
                     .build()
                     .parseClaimsJws(token);
-            log.info("토큰 검증 성공");
             return true;
         } catch (JwtException | IllegalArgumentException e) {
             log.error("토큰 검증 실패: {}", e.getMessage());
