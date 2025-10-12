@@ -3,6 +3,7 @@ package com.sudal.lclink.controller;
 import com.sudal.lclink.dto.ContractRequestDto;
 import com.sudal.lclink.dto.ContractResponseDto;
 import com.sudal.lclink.service.BlockchainService;
+import com.sudal.lclink.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +20,7 @@ public class ContractController {
     @PostMapping
     public ResponseEntity<ContractResponseDto> createContract(@RequestBody ContractRequestDto request) {
         try {
+
             String result = blockchainService.createContract(
                     request.getOnchainContractId(),
                     request.getShipperCompanyId(),

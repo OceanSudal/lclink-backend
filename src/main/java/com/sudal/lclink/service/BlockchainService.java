@@ -30,8 +30,8 @@ public class BlockchainService {
         return network.getContract(chaincodeName);
     }
 
-    public String createContract(String onchainContractId, int shipperCompanyId,
-                                 int forwarderCompanyId, double totalPrice, String currency,
+    public String createContract(String onchainContractId, String shipperCompanyId,
+                                 String forwarderCompanyId, double totalPrice, String currency,
                                  String originPortCode, String destinationPortCode,
                                  String incotermsCode) throws Exception {
         Contract contract = getContract();
