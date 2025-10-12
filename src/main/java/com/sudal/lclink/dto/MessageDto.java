@@ -7,8 +7,9 @@ import lombok.Setter;
 @Setter
 public class MessageDto {
 
-    public enum MessageType { JOIN, TALK, LEAVE, ERROR }
+    public enum MessageType { JOIN, TALK, LEAVE, READ, ERROR }
 
+    private Integer roomId;       // Integer로 변경
     private MessageType messageType;
     private String senderId;
     private String receiverId;
@@ -17,7 +18,7 @@ public class MessageDto {
     private boolean hasFile = false;
     private String fileName;
     private String fileUrl;
-    private String fileData; // Base64 (작은 파일용, 선택사항)
-    private Long fileSize; // 파일 크기 (bytes)
-    private String timestamp;
+    private String fileData;    // Base64 (작은 파일용, 선택사항)
+    private Long fileSize;      // 파일 크기 (bytes)
+    private String timestamp;   // WebSocket 전송용 String
 }

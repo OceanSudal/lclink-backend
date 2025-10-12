@@ -2,6 +2,9 @@ package com.sudal.lclink.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sudal.lclink.dto.MessageDto;
+import com.sudal.lclink.entity.ChatMessage;
+import com.sudal.lclink.entity.ChatRoom;
+import com.sudal.lclink.service.ChatService;
 import com.sudal.lclink.service.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +25,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
     private final ObjectMapper mapper;
     private final FileStorageService fileStorageService;
+    private final ChatService chatService;
 
     private final Map<String, WebSocketSession> userSessionMap = new ConcurrentHashMap<>();
 
@@ -56,8 +60,13 @@ public class WebSocketHandler extends TextWebSocketHandler {
             return;
         }
         userSessionMap.put(msg.getSenderId(), session);
-        msg.setMessage(msg.getSenderId() + "님 접속");
-        sendJsonMessage(session, msg);
+
+        // 읽음 처리
+        if (msg.getRoomId() != null) {
+            chatService.markAsRead(msg.getRoomId(), msg.getSenderId());
+        }
+
+        log.info("사용자 접속: {} (세션: {})", msg.getSenderId(), session.getId());
     }
 
     private void handleTalk(WebSocketSession senderSession, MessageDto msg) {
@@ -66,35 +75,43 @@ public class WebSocketHandler extends TextWebSocketHandler {
             return;
         }
 
-        WebSocketSession target = userSessionMap.get(msg.getReceiverId());
-        if (target == null || !target.isOpen()) {
-            sendErrorMessage(senderSession, "수신자 연결 안됨");
-            return;
-        }
-
         try {
-            // 방법1: HTTP로 이미 업로드된 파일 (fileUrl만 있음)
-            if (msg.isHasFile() && msg.getFileUrl() != null) {
-                // fileUrl과 fileName만 전달 (이미 서버에 저장됨)
-                msg.setFileData(null); // Base64 데이터 제거
-                log.info("파일 알림 전송: {}", msg.getFileName());
-            }
-            // 방법2: WebSocket으로 직접 전송 (작은 파일만, Base64)
-            else if (msg.isHasFile() && msg.getFileData() != null && !msg.getFileData().isBlank()) {
-                String savedFileName = fileStorageService.storeFile(
-                        msg.getFileData(),
-                        msg.getFileName()
-                );
+            // 파일 처리
+            if (msg.isHasFile() && msg.getFileData() != null && !msg.getFileData().isBlank()) {
+                String savedFileName = fileStorageService.storeFile(msg.getFileData(), msg.getFileName());
                 msg.setFileName(savedFileName);
                 msg.setFileUrl("/files/" + savedFileName);
-                msg.setFileData(null); // Base64 제거
-                msg.setMessage("PDF 파일: " + msg.getFileName());
-                log.info("WebSocket 파일 저장: {}", savedFileName);
+                msg.setFileData(null);
+                msg.setMessage("파일: " + msg.getFileName());
             }
 
-            // 수신자와 발신자에게 메시지 전송
-            sendJsonMessage(target, msg);
-            // sendJsonMessage(senderSession, msg);
+            // DB 저장
+            ChatRoom room = new ChatRoom();
+            room.setRoomId(msg.getRoomId());
+            ChatMessage chatMessage = ChatMessage.builder()
+                    .senderId(msg.getSenderId())
+                    .receiverId(msg.getReceiverId())
+                    .message(msg.getMessage())
+                    .hasFile(msg.isHasFile())
+                    .fileUrl(msg.getFileUrl())
+                    .fileName(msg.getFileName())
+                    .chatRoom(room)
+                    .build();
+
+            ChatMessage savedMessage = chatService.saveMessage(chatMessage);
+            msg.setTimestamp(savedMessage.getTimestamp().atOffset(ZoneOffset.UTC)
+                    .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+
+            // 🔥 수신자에게 전송
+            WebSocketSession receiverSession = userSessionMap.get(msg.getReceiverId());
+            if (receiverSession != null && receiverSession.isOpen()) {
+                sendJsonMessage(receiverSession, msg);
+            } else {
+                log.warn("수신자 {} 오프라인", msg.getReceiverId());
+            }
+
+            // 🔥 발신자에게도 전송 (본인 화면에 표시)
+            sendJsonMessage(senderSession, msg);
 
         } catch (Exception e) {
             log.error("TALK 처리 오류", e);
@@ -103,7 +120,17 @@ public class WebSocketHandler extends TextWebSocketHandler {
     }
 
     private void handleLeave(WebSocketSession session, MessageDto msg) {
-        if (msg.getSenderId() != null) userSessionMap.remove(msg.getSenderId());
+        if (msg.getSenderId() != null) {
+            userSessionMap.remove(msg.getSenderId());
+            log.info("사용자 퇴장: {}", msg.getSenderId());
+        }
+    }
+
+    @Override
+    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
+        // 세션이 끊어질 때 맵에서 제거
+        userSessionMap.entrySet().removeIf(entry -> entry.getValue().getId().equals(session.getId()));
+        log.info("WebSocket 연결 종료: {} (상태: {})", session.getId(), status);
     }
 
     private void sendJsonMessage(WebSocketSession session, MessageDto msg) {

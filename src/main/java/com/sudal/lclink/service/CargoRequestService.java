@@ -6,10 +6,12 @@ import com.sudal.lclink.dto.CompanyDto;
 import com.sudal.lclink.entity.CargoItem;
 import com.sudal.lclink.entity.CargoRequest;
 import com.sudal.lclink.entity.Company;
+import com.sudal.lclink.entity.User;
 import com.sudal.lclink.exception.AlreadyExistElementException;
 import com.sudal.lclink.repository.CargoItemRepository;
 import com.sudal.lclink.repository.CargoRequestRepository;
 import com.sudal.lclink.repository.CompanyRepository;
+import com.sudal.lclink.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -27,19 +29,19 @@ public class CargoRequestService {
 
     private final CargoRequestRepository cargoRequestRepository;
     private final CargoItemRepository cargoItemRepository;
-    private final CompanyRepository companyRepository;
+    private final UserRepository userRepository;
 
     // CREATE
     public CargoRequestDto register(CargoRequestDto dto) {
         CargoItem cargoItem = cargoItemRepository.findById(dto.getItemId())
                 .orElseThrow(() -> new IllegalArgumentException("화물 항목을 찾을 수 없습니다. itemId=" + dto.getItemId()));
 
-        Company shipperCompany = companyRepository.findById(dto.getShipperCompanyId())
-                .orElseThrow(() -> new IllegalArgumentException("화주 회사를 찾을 수 없습니다. companyId=" + dto.getShipperCompanyId()));
+        User shipperUser = userRepository.findById(dto.getShipperUserId())
+                .orElseThrow(() -> new IllegalArgumentException("화주 사용자를 찾을 수 없습니다. userId=" + dto.getShipperUserId()));
 
         CargoRequest entity = CargoRequest.builder()
                 .cargoItem(cargoItem)
-                .shipperCompany(shipperCompany)
+                .shipperUser(shipperUser)
                 .originPortCode(dto.getOriginPortCode())
                 .destinationPortCode(dto.getDestinationPortCode())
                 .readyToLoadDate(dto.getReadyToLoadDate())
@@ -57,6 +59,20 @@ public class CargoRequestService {
         CargoRequest found = cargoRequestRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("요청을 찾을 수 없습니다. id=" + id));
         return CargoRequestDto.from(found);
+    }
+
+    // READ (userId)
+    @Transactional(readOnly = true)
+    public List<CargoRequestDto> getUserRequest(String userId) {
+        List<CargoRequest> requests = cargoRequestRepository.findByShipperUser_UserId(userId);
+
+        if (requests.isEmpty()){
+                throw new IllegalArgumentException("사용자을 찾을 수 없습니다. userId=" + userId);
+        }
+
+        return requests.stream()
+                .map(CargoRequestDto::from)
+                .toList();
     }
 
     // READ (전체)
