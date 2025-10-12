@@ -31,6 +31,11 @@ public class QuoteController {
         return ResponseEntity.ok(quoteService.listByQuoteId(quoteId));
     }
 
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<QuoteDto>> getByForwarderUserId(@PathVariable String userId) {
+        return ResponseEntity.ok(quoteService.listByForwarderUserId(userId));
+    }
+
     // UPDATE
     @PutMapping("/{quoteId}")
     public QuoteDto update(

@@ -5,9 +5,11 @@ import com.sudal.lclink.dto.QuoteDto;
 import com.sudal.lclink.entity.CargoRequest;
 import com.sudal.lclink.entity.Company;
 import com.sudal.lclink.entity.Quote;
+import com.sudal.lclink.entity.User;
 import com.sudal.lclink.repository.CargoRequestRepository;
 import com.sudal.lclink.repository.CompanyRepository;
 import com.sudal.lclink.repository.QuoteRepository;
+import com.sudal.lclink.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,19 +26,19 @@ public class QuoteService {
 
     private final QuoteRepository quoteRepository;
     private final CargoRequestRepository cargoRequestRepository;
-    private final CompanyRepository companyRepository;
+    private final UserRepository userRepository;
 
     // CREATE
     public QuoteDto createQuote(QuoteDto dto) {
         CargoRequest request = cargoRequestRepository.findById(dto.getRequestId())
                 .orElseThrow(() -> new IllegalArgumentException("요청을 찾을 수 없습니다."));
 
-        Company forwarder = companyRepository.findById(dto.getForwarderCompanyId())
+        User forwarder = userRepository.findById(dto.getForwarderUserId())
                 .orElseThrow(() -> new IllegalArgumentException("포워더 회사를 찾을 수 없습니다."));
 
         Quote entity = Quote.builder()
                 .cargoRequest(request)
-                .forwarderCompany(forwarder)
+                .forwarderUser(forwarder)
                 .totalPrice(dto.getTotalPrice())
                 .currency(dto.getCurrency())
                 .estimatedDepartureDate(dto.getEstimatedDepartureDate())
@@ -63,6 +65,15 @@ public class QuoteService {
     @Transactional(readOnly = true)
     public List<QuoteDto> listByQuoteId(Integer quoteId) {
         return quoteRepository.findByQuoteId(quoteId)
+                .stream()
+                .map(QuoteDto::from)
+                .collect(Collectors.toList());
+    }
+
+    // READ (by userId)
+    @Transactional(readOnly = true)
+    public List<QuoteDto> listByForwarderUserId(String userId) {
+        return quoteRepository.findByForwarderUser_UserId(userId)
                 .stream()
                 .map(QuoteDto::from)
                 .collect(Collectors.toList());
