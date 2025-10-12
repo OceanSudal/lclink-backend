@@ -55,3 +55,13 @@ fabric.msp.id=ShipperMSP
   }
 }
 ```
+
+### 4. /etc/hosts 설정
+```bash
+sudo vi /etc/hosts
+```
+```bash
+[orderer 퍼블릭 IPv4 주소]     orderer.lclink.com
+[shipper 퍼블릭 IPv4 주소]     peer0.shipper.lclink.com
+[forwarder 퍼블릭 IPv4 주소]   peer0.forwarder.lclink.com
+```
