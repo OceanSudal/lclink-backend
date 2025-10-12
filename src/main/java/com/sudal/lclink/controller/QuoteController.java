@@ -23,7 +23,13 @@ public class QuoteController {
 
     @GetMapping("/request/{requestId}")
     public ResponseEntity<List<QuoteDto>> getByRequest(@PathVariable Integer requestId) {
-        return ResponseEntity.ok(quoteService.listByRequestId(requestId));
+        List<QuoteDto> quotes = quoteService.listByRequestId(requestId);
+
+        if (quotes.isEmpty()) {
+            return ResponseEntity.noContent().build(); // 204 No Content 반환
+        }
+
+        return ResponseEntity.ok(quotes);
     }
 
     @GetMapping("/{quoteId}")
