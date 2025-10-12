@@ -95,12 +95,13 @@ public class WebSocketHandler extends TextWebSocketHandler {
                     .hasFile(msg.isHasFile())
                     .fileUrl(msg.getFileUrl())
                     .fileName(msg.getFileName())
-                    .chatRoom(room)
+                    //.chatRoom(room)
                     .build();
 
             ChatMessage savedMessage = chatService.saveMessage(chatMessage);
             msg.setTimestamp(savedMessage.getTimestamp().atOffset(ZoneOffset.UTC)
                     .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+            msg.setRoomId(savedMessage.getChatRoom().getRoomId());
 
             // 🔥 수신자에게 전송
             WebSocketSession receiverSession = userSessionMap.get(msg.getReceiverId());
