@@ -44,38 +44,37 @@ public class ChatService {
      */
     @Transactional
     public ChatRoom createOrGetRoom(String userId, String partnerId, String partnerName, String partnerAvatarUrl) {
-        // 내 입장에서의 채팅방 찾기
-        Optional<ChatRoom> myRoom = chatRoomRepository.findByUserIdAndPartnerId(userId, partnerId);
+        // ID 정렬 (A가 B보다 ID가 빠르다고 가정)
+        String first = userId.compareTo(partnerId) < 0 ? userId : partnerId; // A
+        String second = userId.compareTo(partnerId) < 0 ? partnerId : userId; // B
 
-        if (myRoom.isPresent()) {
-            return myRoom.get();
+        // 1. 논리적 채팅방 찾기 (항상 first와 second로 찾음)
+        Optional<ChatRoom> logicalRoomOptional = chatRoomRepository.findByUserIdAndPartnerId(first, second);
+
+        if (logicalRoomOptional.isPresent()) {
+            // 이미 방이 있다면, '논리적 방'을 반환
+            return logicalRoomOptional.get();
         }
 
         // 새 채팅방 생성 - 양방향
-        ChatRoom roomForMe = ChatRoom.builder()
-                .userId(userId)
-                .partnerId(partnerId)
-                .partnerName(partnerName)
-                .partnerAvatarUrl(partnerAvatarUrl)
-                .lastMessage("")
-                .lastMessageTimestamp(Instant.now())
-                .unreadCount(0)
+        // 2. 논리적 방 (first 사용자 관점의 방)
+        ChatRoom logicalRoom = ChatRoom.builder()
+                .userId(first)
+                .partnerId(second)
+                // ... (이하 생략)
                 .build();
+        chatRoomRepository.save(logicalRoom); // logicalRoom.roomId가 생성됨
 
-        ChatRoom roomForPartner = ChatRoom.builder()
-                .userId(partnerId)
-                .partnerId(userId)
-                .partnerName("나") // 실제로는 userId의 이름을 조회해야 함
-                .partnerAvatarUrl(null) // 실제로는 userId의 아바타를 조회해야 함
-                .lastMessage("")
-                .lastMessageTimestamp(Instant.now())
-                .unreadCount(0)
+        // 3. 상대방 방 (second 사용자 관점의 방)
+        ChatRoom partnerRoom = ChatRoom.builder()
+                .userId(second)
+                .partnerId(first)
+                // ... (이하 생략)
                 .build();
+        chatRoomRepository.save(partnerRoom);
 
-        chatRoomRepository.save(roomForMe);
-        chatRoomRepository.save(roomForPartner);
-
-        return roomForMe;
+        // 클라이언트에게는 항상 '논리적 방'을 반환
+        return logicalRoom;
     }
 
     /**
@@ -98,33 +97,41 @@ public class ChatService {
     /**
      * 메시지 저장 및 양쪽 채팅방 업데이트
      */
+    // ChatService.java
+
+    /**
+     * 메시지 저장 및 양쪽 채팅방 업데이트
+     */
     @Transactional
     public ChatMessage saveMessage(ChatMessage msg) {
-        // 발신자 입장의 채팅방
-        ChatRoom senderRoom = chatRoomRepository.findByUserIdAndPartnerId(
-                        msg.getSenderId(), msg.getReceiverId())
-                .orElseThrow(() -> new RuntimeException("발신자 채팅방 없음"));
-
-        // 수신자 입장의 채팅방
-        ChatRoom receiverRoom = chatRoomRepository.findByUserIdAndPartnerId(
-                        msg.getReceiverId(), msg.getSenderId())
-                .orElseThrow(() -> new RuntimeException("수신자 채팅방 없음"));
-
         Instant now = Instant.now();
 
-        // 발신자 채팅방 업데이트 (unreadCount 증가 안 함)
+        // 1. 논리적 채팅방 조회 (A, B 두 사용자 중 ID가 빠른 사용자의 ChatRoom)
+        String first = msg.getSenderId().compareTo(msg.getReceiverId()) < 0 ? msg.getSenderId() : msg.getReceiverId();
+        String second = msg.getSenderId().compareTo(msg.getReceiverId()) < 0 ? msg.getReceiverId() : msg.getSenderId();
+
+        ChatRoom logicalRoom = chatRoomRepository.findByUserIdAndPartnerId(first, second)
+                .orElseThrow(() -> new RuntimeException("논리적 채팅방 없음"));
+
+        // 2. 수신자 관점의 채팅방 조회 및 unreadCount 증가
+        ChatRoom receiverRoom = chatRoomRepository.findByUserIdAndPartnerId(msg.getReceiverId(), msg.getSenderId())
+                .orElseThrow(() -> new RuntimeException("수신자 채팅방 없음"));
+
+        receiverRoom.setLastMessage(msg.getMessage());
+        receiverRoom.setLastMessageTimestamp(now);
+        receiverRoom.setUnreadCount(receiverRoom.getUnreadCount() + 1); // 수신자 unreadCount 증가
+        chatRoomRepository.save(receiverRoom);
+
+        // 3. 발신자 관점의 채팅방 LastMessage 업데이트 (unreadCount는 0으로 유지)
+        ChatRoom senderRoom = chatRoomRepository.findByUserIdAndPartnerId(msg.getSenderId(), msg.getReceiverId())
+                .orElseThrow(() -> new RuntimeException("발신자 채팅방 없음"));
+
         senderRoom.setLastMessage(msg.getMessage());
         senderRoom.setLastMessageTimestamp(now);
         chatRoomRepository.save(senderRoom);
 
-        // 수신자 채팅방 업데이트 (unreadCount 증가)
-        receiverRoom.setLastMessage(msg.getMessage());
-        receiverRoom.setLastMessageTimestamp(now);
-        receiverRoom.setUnreadCount(receiverRoom.getUnreadCount() + 1);
-        chatRoomRepository.save(receiverRoom);
-
-        // 메시지 저장 (발신자 채팅방에 연결)
-        msg.setChatRoom(senderRoom);
+        // 4. ChatMessage 저장 (논리적 방에 연결)
+        msg.setChatRoom(logicalRoom); // 🚨 모든 메시지는 이 논리적 방에 연결됨
         msg.setTimestamp(now);
         return chatMessageRepository.save(msg);
     }

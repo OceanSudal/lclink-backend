@@ -2,6 +2,8 @@ package com.sudal.lclink.repository;
 
 import com.sudal.lclink.entity.ChatRoom;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -15,8 +17,12 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Integer> {
      */
     List<ChatRoom> findAllByUserId(String userId);
 
-    /**
-     * 특정 사용자와 특정 상대방의 채팅방 조회
-     */
-    Optional<ChatRoom> findByUserIdAndPartnerId(String userId, String partnerId);
+
+    // 사용자 입장에서 방 목록 조회
+    List<ChatRoom> findAllByUserIdOrPartnerId(String userId1, String userId2);
+
+    // 단일 채팅방 조회 (정렬된 userId, partnerId)
+    @Query("SELECT c FROM ChatRoom c WHERE c.userId = :userId AND c.partnerId = :partnerId")
+    Optional<ChatRoom> findByUserIdAndPartnerId(@Param("userId") String userId,
+                                                @Param("partnerId") String partnerId);
 }
