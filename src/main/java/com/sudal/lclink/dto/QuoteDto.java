@@ -13,6 +13,7 @@ import java.time.LocalDate;
 public class QuoteDto {
     private Integer quoteId;
     private Integer requestId;
+    private Integer itemId;
     private String forwarderUserId;
     private BigDecimal totalPrice;
     private String currency;
@@ -27,6 +28,7 @@ public class QuoteDto {
         return QuoteDto.builder()
                 .quoteId(quote.getQuoteId())
                 .requestId(quote.getCargoRequest().getRequestId())
+                .itemId(quote.getCargoRequest().getCargoItem().getItemId())
                 .forwarderUserId(quote.getForwarderUser().getUserId())
                 .totalPrice(quote.getTotalPrice())
                 .currency(quote.getCurrency())
