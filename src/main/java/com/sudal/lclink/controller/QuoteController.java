@@ -42,6 +42,11 @@ public class QuoteController {
         return ResponseEntity.ok(quoteService.listByForwarderUserId(userId));
     }
 
+    @GetMapping("/shipper/{shipperUserId}")
+    public List<QuoteDto> getQuotesByShipper(@PathVariable String shipperUserId) {
+        return quoteService.listByShipperUserId(shipperUserId);
+    }
+
     // UPDATE
     @PutMapping("/{quoteId}")
     public QuoteDto update(

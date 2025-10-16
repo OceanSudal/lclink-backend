@@ -79,11 +79,17 @@ public class RecommendationService {
         }
 
         return String.format(
-                "You are an expert LCL freight matching specialist for a forwarder." +
-                        "From the 'List of Cargo Requests' below, select the 3 most attractive requests to bid on." +
-                        "Criteria: 1) Clear origin/destination, 2) Reasonable departure date, 3) Suitable cargo volume." +
-                        "Respond ONLY in JSON format: {\"recommendations\": [{\"requestId\": <id>, \"reason\": \"<reason>\"}]}\n\n" +
-                        "### Cargo Requests:\n%s",
+                "You are an expert LCL freight contract matching specialist for a forwarder." +
+                        "From the 'List of Shipper Contracts' below, select the 3 most attractive contracts." +
+                        "The criteria for attractiveness are: 1) CBM and weight are not too small, 2) origin and destination are clear, and 3) the departure date (etd) is not too far in the future." +
+                        "For each recommendation, summarize the reason in one sentence." +
+                        "You MUST respond ONLY in the following JSON format. Do not add any other explanations." +
+                        "You must recommend at least one contract." +
+                        "### List of Shipper Contracts:\n%s\n\n" +
+                        "### Output Format:\n" +
+                        "```json\n" +
+                        "{\"recommendations\": [{\"itemId\": <recommended_itemId>, \"reason\": \"<reason_for_recommendation>\"}]}\n" +
+                        "```",
                 requestsJson
         );
     }

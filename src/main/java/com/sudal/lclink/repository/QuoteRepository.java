@@ -11,5 +11,5 @@ public interface QuoteRepository extends JpaRepository<Quote, Integer> {
     List<Quote> findByCargoRequest_RequestId(Integer requestId);
     Optional<Quote> findByQuoteId(Integer quoteId);
     List<Quote> findByForwarderUser_UserId(String userId);
-
+    List<Quote> findByCargoRequest_ShipperUser_UserId(String shipperUserId);
 }
