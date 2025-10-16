@@ -22,6 +22,10 @@ public class ChatRoom {
 
     // 대화 상대방
     private String partnerId;
+
+    @Transient
+    private Integer partnerRoomId;
+
     private String partnerName;
     private String partnerAvatarUrl;
 

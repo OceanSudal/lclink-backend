@@ -26,7 +26,18 @@ public class ChatService {
      * 특정 사용자의 채팅방 목록 조회
      */
     public List<ChatRoom> getChatRooms(String userId) {
-        return chatRoomRepository.findAllByUserId(userId);
+        List<ChatRoom> rooms = chatRoomRepository.findAllByUserId(userId);
+
+        for (ChatRoom room : rooms){
+            Optional<ChatRoom> partnerRoom = chatRoomRepository
+                    .findByUserIdAndPartnerId(room.getPartnerId(), room.getUserId());
+
+            if (partnerRoom.isPresent()) {
+                room.setPartnerRoomId(partnerRoom.get().getRoomId());
+            }
+        }
+
+        return rooms;
     }
 
     /**
@@ -57,11 +68,17 @@ public class ChatService {
         }
 
         // 새 채팅방 생성 - 양방향
+        Instant now = Instant.now();
+
         // 2. 논리적 방 (first 사용자 관점의 방)
         ChatRoom logicalRoom = ChatRoom.builder()
                 .userId(first)
                 .partnerId(second)
-                // ... (이하 생략)
+                .partnerName(userId.equals(first) ? partnerName : null) // first가 userId면 partnerName 사용
+                .partnerAvatarUrl(userId.equals(first) ? partnerAvatarUrl : null)
+                .lastMessage("")
+                .lastMessageTimestamp(now)
+                .unreadCount(0)
                 .build();
         chatRoomRepository.save(logicalRoom); // logicalRoom.roomId가 생성됨
 
@@ -69,7 +86,11 @@ public class ChatService {
         ChatRoom partnerRoom = ChatRoom.builder()
                 .userId(second)
                 .partnerId(first)
-                // ... (이하 생략)
+                .partnerName(userId.equals(second) ? partnerName : null) // second가 userId면 partnerName 사용
+                .partnerAvatarUrl(userId.equals(second) ? partnerAvatarUrl : null)
+                .lastMessage("")
+                .lastMessageTimestamp(now)
+                .unreadCount(0)
                 .build();
         chatRoomRepository.save(partnerRoom);
 
