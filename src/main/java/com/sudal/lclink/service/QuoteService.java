@@ -79,6 +79,15 @@ public class QuoteService {
                 .collect(Collectors.toList());
     }
 
+    // READ (by shipper)
+    @Transactional(readOnly = true)
+    public List<QuoteDto> listByShipperUserId(String shipperUserId) {
+        return quoteRepository.findByCargoRequest_ShipperUser_UserId(shipperUserId)
+                .stream()
+                .map(QuoteDto::from)
+                .collect(Collectors.toList());
+    }
+
     // UPDATE
     public QuoteDto update(Integer quoteId, QuoteDto dto) {
         Quote q = quoteRepository.findByQuoteId(quoteId)
