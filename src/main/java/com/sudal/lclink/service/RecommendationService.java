@@ -88,7 +88,7 @@ public class RecommendationService {
                         "### List of Shipper Contracts:\n%s\n\n" +
                         "### Output Format:\n" +
                         "```json\n" +
-                        "{\"recommendations\": [{\"itemId\": <recommended_itemId>, \"reason\": \"<reason_for_recommendation>\"}]}\n" +
+                        "{\"recommendations\": [{\"requestId\": <recommended_requestId>, \"reason\": \"<reason_for_recommendation>\"}]}\n" +
                         "```",
                 requestsJson
         );
